@@ -45,7 +45,7 @@ class RefreshTokenRequest(BaseModel):
 
 class LeadCreate(BaseModel):
     name: str
-    email: Optional[EmailStr]
+    email: Optional[EmailStr] = None
     phone: Optional[str] = Field(
         default=None,
         pattern=r"^[0-9+\-\s]{7,15}$")
@@ -53,13 +53,13 @@ class LeadCreate(BaseModel):
     status: LeadStatus = LeadStatus.new
 
 class LeadUpdate(BaseModel):
-    name: Optional[str]
-    email: Optional[EmailStr]
+    name: Optional[str] = None
+    email: Optional[EmailStr] = None
     phone: Optional[str] = Field(
         default=None,
         pattern=r"^[0-9+\-\s]{7,15}$")
     company: Optional[str] = None
-    status: Optional[LeadStatus]
+    status: Optional[LeadStatus] = LeadStatus.new
     assigned_to: Optional[int] = None
 
 class LeadOut(BaseModel):

@@ -62,7 +62,7 @@ def update_lead(id: int, lead: schemas.LeadUpdate, db: Session = Depends(get_db)
 
     update_data = lead.model_dump(exclude_unset=True)
     for field, value in update_data.items():
-        setattr(lead, field, value)
+        setattr(updated_lead, field, value)
 
     db.commit()
     db.refresh(updated_lead)
