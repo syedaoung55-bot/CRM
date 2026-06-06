@@ -125,6 +125,7 @@ class FileOut(BaseModel):
     id: int
     filename: str
     filepath: str
+    filetype: str
     filesize: int
     lead_id: int
     user_id: int
