@@ -69,8 +69,7 @@ def update_lead(id: int, lead: schemas.LeadUpdate, db: Session = Depends(get_db)
 
     if old_status.value != updated_lead.status.value:
         action = "Lead Updated and Status changed"
-        description = f"Status is changed from {old_status} to {updated_lead.status
-                        } and Lead {lead.name} is created by {current_user.email}"
+        description = f"Status is changed from {old_status} to {updated_lead.status} and Lead {lead.name} is created by {current_user.email}"
     else:
         action = "Lead Updated"
         description = f"Lead {lead.name} is created by {current_user.email}"
