@@ -6,7 +6,6 @@ from app.database import engine, Base
 from slowapi import Limiter
 
 
-models.Base.metadata.create_all(bind=engine)
 origins = ['*']
 
 app = FastAPI()
