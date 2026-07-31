@@ -25,6 +25,11 @@ def check_lead_permission(lead, current_user):
         if lead.owner_id != current_user.id:
             raise HTTPException(status_code=status.HTTP_403_FORBIDDEN,
                             detail="You can only modify your own leads.")
+
+    if current_user.role == UserRole.manager:
+            if lead.owner_id != current_user.id:
+                raise HTTPException(status_code=status.HTTP_403_FORBIDDEN,
+                                detail="You can only modify your own leads or leads assigned to you.")
         
 def check_lead_view_permission(lead, current_user):
     if current_user.role == UserRole.sales:

@@ -35,7 +35,7 @@ def create_note(id: int, note: schemas.NoteCreate, db: Session = Depends(get_db)
 
 @router.get("/{id}/notes", response_model = list[schemas.NoteOut])
 def get_notes(id: int, db: Session = Depends(get_db), current_user: models.User = 
-              Depends(oauth2.get_current_user)):
+              Depends(check_note_permission)):
     lead = get_lead_or_404(id, db)
 
     notes = db.query(models.Note).filter(models.Note.lead_id == id,
@@ -45,7 +45,7 @@ def get_notes(id: int, db: Session = Depends(get_db), current_user: models.User 
 
 @router.delete("/{id}/notes/{note_id}", status_code=status.HTTP_204_NO_CONTENT)
 def delete_note(id: int, note_id: int, db: Session = Depends(get_db),
-                current_user: models.User = Depends(oauth2.get_current_user)):
+                current_user: models.User = Depends(check_note_permission)):
     
     lead = get_lead_or_404(id, db)
     note = db.query(models.Note).filter(models.Note.id == note_id).first()

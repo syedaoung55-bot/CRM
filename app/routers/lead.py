@@ -54,7 +54,7 @@ def get_Lead(id: int, db: Session = Depends(get_db),
 
 @router.put("/{id}", response_model=schemas.LeadOut)
 def update_lead(id: int, lead: schemas.LeadUpdate, db: Session = Depends(get_db),
-                current_user: models.User = Depends(require_admin)):
+                current_user: models.User = Depends(check_lead_permission)):
     updated_lead = get_lead_or_404(id, db)
     old_status = updated_lead.status
 
