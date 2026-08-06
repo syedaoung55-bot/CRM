@@ -27,6 +27,9 @@ class User(Base):
     is_active = Column(Boolean, nullable=False, default=True)
     created_at = Column(TIMESTAMP(timezone=True), 
                         nullable=False, server_default=text('now()'))
+    company_id = Column(Integer, ForeignKey("companies.id", ondelete="CASCADE"), nullable=False)
+
+    company = relationship('Company', back_populates='users')
 
 class Lead(Base):
     __tablename__ = "leads"
@@ -47,6 +50,9 @@ class Lead(Base):
     files = relationship("LeadFile", back_populates="lead", cascade="all, delete")
     author = relationship("User", foreign_keys=[owner_id])
     assign = relationship("User", foreign_keys=[assigned_to])
+    company_id = Column(Integer, ForeignKey("companies.id", ondelete="CASCADE"), nullable=False)
+
+    tenant = relationship('Company', back_populates='leads')
     
 class Note(Base):
     __tablename__ = "notes"
@@ -102,3 +108,15 @@ class RefreshToken(Base):
     expires_at = Column(TIMESTAMP(timezone=True), nullable=False)
     
     user = relationship("User")
+
+class Company(Base):
+    __tablename__ = "companies"
+
+    id = Column(Integer, primary_key=True, nullable=False)
+    name = Column(String, nullable=False)
+    created_at = Column(TIMESTAMP(timezone=True), 
+                            nullable=False, server_default=text('now()'))
+
+    users = relationship('User', back_populates='company')
+    leads = relationship('Lead', back_populates='tenant')
+    #tasks = relationship('Task', back_populates='company')

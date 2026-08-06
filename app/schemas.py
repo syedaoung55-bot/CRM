@@ -3,12 +3,21 @@ from typing import Optional, Literal
 from datetime import datetime
 from .models import UserRole, LeadStatus
 
+class CompanyCreate(BaseModel):
+    name: str
+
+class CompanyOut(BaseModel):
+    id: int
+    name: str
+    created_at: datetime
+
+    model_config = ConfigDict(from_attributes=True)
+
 class UserCreate(BaseModel):
     email: EmailStr
     password: str
     full_name: str
-    role: UserRole = UserRole.sales
-    is_active: bool = True
+    company_name: str
 
     @field_validator("password")
     @classmethod
@@ -17,11 +26,24 @@ class UserCreate(BaseModel):
             raise ValueError("Password must be atleast 8 character long")
         return value
 
+class UserInvite(BaseModel):
+    email: EmailStr
+    full_name: str
+    role: UserRole = UserRole.sales
+
+    @field_validator("role")
+    @classmethod
+    def validate_invitable_role(cls, value):
+        if value == UserRole.admin:
+            raise ValueError("Admins cannot be created via invite. Only manager or sales roles are allowed.")
+        return value
+
 class UserOut(BaseModel):
     id: int
     email: EmailStr
     full_name: str
     role: UserRole
+    company: CompanyOut
     is_active: bool
     created_at: datetime
 
@@ -35,6 +57,9 @@ class Token(BaseModel):
     access_token: str
     refresh_token: str
     token_type: str
+    company_id: int
+    company_name: str
+    role: str
 
 class TokenData(BaseModel):
     id: Optional[int] = None
@@ -64,6 +89,7 @@ class LeadUpdate(BaseModel):
 
 class LeadOut(BaseModel):
     id: int 
+    company_id: int
     name: str
     email: Optional[str]
     phone: Optional[str]
@@ -79,6 +105,7 @@ class LeadOut(BaseModel):
 
 class LeadOut1(BaseModel):
     id: int 
+    company_id: int
     name: str
     email: Optional[str]
     phone: Optional[str]

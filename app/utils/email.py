@@ -55,3 +55,27 @@ async def send_welcome_email(email: str, full_name: str):
     fm = FastMail(conf)
 
     await fm.send_message(message)
+
+
+async def send_invite_email(email: str, full_name: str, temp_password: str, company_name: str, invited_by: str):
+    message = MessageSchema(
+        subject=f"You've been invited to join {company_name}",
+        recipients=[email], # type: ignore
+        body=f"""
+        Hi {full_name},
+
+        {invited_by} has invited you to join {company_name} on the CRM.
+
+        Your temporary login credentials:
+        Email: {email}
+        Temporary Password: {temp_password}
+
+        Please log in and change your password as soon as possible.
+
+        Regards,
+        {company_name}
+        """,
+        subtype=MessageType.plain
+    )
+    fm = FastMail(conf)
+    await fm.send_message(message)

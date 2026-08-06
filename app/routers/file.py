@@ -7,14 +7,14 @@ from .. import schemas, models, oauth2
 from ..permissions import (get_lead_or_404, require_admin, create_activity_log)
 
 router = APIRouter(
-    prefix = f"/leads",
+    prefix = f"/api/leads",
     tags = ["Notes"]
 )
 
 @router.post("/{id}/file", status_code=status.HTTP_201_CREATED, response_model=schemas.FileOut)
 async def Upload_file(id: int, file: UploadFile = File(...), db: Session = Depends(get_db),
                       current_user: models.User = Depends(oauth2.get_current_user)):
-    lead = get_lead_or_404(id, db)
+    lead = get_lead_or_404(id, db, current_user)
 
     file_info = await save_file(file, id)
 
@@ -40,7 +40,7 @@ async def Upload_file(id: int, file: UploadFile = File(...), db: Session = Depen
 @router.get("/{id}/file", response_model=List[schemas.FileOut])
 def get_file(id: int, db: Session = Depends(get_db), 
              current_user: models.User = Depends(oauth2.get_current_user)):
-    get_lead_or_404(id, db)
+    get_lead_or_404(id, db, current_user)
 
     files = db.query(models.LeadFile).filter(models.LeadFile.lead_id == id).all()
     
@@ -53,9 +53,10 @@ def get_file(id: int, db: Session = Depends(get_db),
 @router.delete("/{id}/file/{file_id}", status_code=status.HTTP_204_NO_CONTENT)
 def delete_file_route(id: int, file_id: int, db: Session = Depends(get_db),
                 current_user: models.User = Depends(oauth2.get_current_user)):
-    get_lead_or_404(id, db)
+    get_lead_or_404(id, db, current_user)
 
-    file = db.query(models.LeadFile).filter(models.LeadFile.id == file_id).first()
+    file = db.query(models.LeadFile).filter(models.LeadFile.id == file_id, models.LeadFile.lead_id == id
+                    ).first()
 
     if not file:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, 

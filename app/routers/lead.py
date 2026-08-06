@@ -5,29 +5,31 @@ from ..database import get_db
 from typing import Optional, List
 from .. import schemas, models, oauth2
 from ..permissions import (get_lead_or_404, check_lead_permission, check_lead_view_permission,
-                           require_admin, require_admin_or_manager, create_activity_log)
+                           require_admin, require_admin_or_manager, create_activity_log, scoped)
 
 
 router = APIRouter(
-    prefix="/leads",
+    prefix="/api/v1/leads",
     tags = ['Leads'])
 
 @router.get("/", response_model=List[schemas.LeadOut1])
 def get_all_leads(db: Session=Depends(get_db), current_user: models.User=Depends(oauth2.get_current_user),
                   limit: int=10, skip: int=0, search: Optional[str]="" , sort: Optional[str] = "created_at"):
 
-    lead = db.query(models.Lead).filter(models.Lead.name.contains(search)).order_by(models.Lead.created_at.desc()).limit(limit).offset(skip).all()
+    query = scoped(db.query(models.Lead), models.Lead, current_user)
+    query1 = query.filter(models.Lead.name.contains(search))
 
-    if current_user.role.value == schemas.UserRole.sales.value:
-        lead = db.query(models.Lead).filter(models.Lead.owner_id == current_user.id)
+    if current_user.role.value == models.UserRole.sales:
+        query1 = query.filter(models.Lead.owner_id == current_user.id)
 
-    return lead
+    return query1.order_by(models.Lead.created_at.desc()).limit(limit).offset(skip).all()
 
 
 @router.post("/", status_code=status.HTTP_201_CREATED, response_model=schemas.LeadOut)
 def create_lead(lead: schemas.LeadCreate, db: Session=Depends(get_db), 
                 current_user: models.User =Depends(oauth2.get_current_user)):
-    lead = models.Lead(**lead.model_dump(), owner_id = current_user.id)  
+    lead = models.Lead(**lead.model_dump(), owner_id = current_user.id, 
+                       company_id = current_user.company_id)  
     db.add(lead)
     db.commit()
     db.refresh(lead)
@@ -47,18 +49,18 @@ def create_lead(lead: schemas.LeadCreate, db: Session=Depends(get_db),
 def get_Lead(id: int, db: Session = Depends(get_db), 
              current_user: models.User = Depends(oauth2.get_current_user)):
 
-    lead = get_lead_or_404(id, db)
+    lead = get_lead_or_404(id, db, current_user)
     check_lead_view_permission(lead, current_user)
 
     return lead
 
 @router.put("/{id}", response_model=schemas.LeadOut)
 def update_lead(id: int, lead: schemas.LeadUpdate, db: Session = Depends(get_db),
-                current_user: models.User = Depends(check_lead_permission)):
-    updated_lead = get_lead_or_404(id, db)
+                current_user: models.User = Depends(oauth2.get_current_user)):
+    updated_lead = get_lead_or_404(id, db, current_user)
     old_status = updated_lead.status
 
-    check_lead_permission(lead, current_user)
+    check_lead_permission(updated_lead, current_user)
 
     update_data = lead.model_dump(exclude_unset=True)
     for field, value in update_data.items():
@@ -85,9 +87,11 @@ def update_lead(id: int, lead: schemas.LeadUpdate, db: Session = Depends(get_db)
 
 @router.delete("/{id}", status_code=status.HTTP_204_NO_CONTENT)
 def delete_lead(id: int, db: Session = Depends(get_db),
-                current_user: models.User = Depends(require_admin)):
-    lead = get_lead_or_404(id, db)
+                current_user: models.User = Depends(oauth2.get_current_user)):
+    lead = get_lead_or_404(id, db, current_user)
     lead_name = lead.name
+
+    require_admin(current_user)
 
     db.delete(lead)
     db.commit()
@@ -104,10 +108,12 @@ def delete_lead(id: int, db: Session = Depends(get_db),
 
 @router.patch("/{id}/assign", response_model=schemas.LeadOut)
 async def assign_lead(id: int, lead_assign: schemas.LeadAssign, db: Session = Depends(get_db),
-                current_user: models.User = Depends(require_admin_or_manager)):
-    lead = get_lead_or_404(id, db)
+                current_user: models.User = Depends(oauth2.get_current_user)):
+    lead = get_lead_or_404(id, db, current_user)
+    require_admin_or_manager(current_user)
 
-    assigned_user = db.query(models.User).filter(models.User.id == lead_assign.assigned_to).first()
+    assigned_user = db.query(models.User).filter(models.User.id == lead_assign.assigned_to, 
+                            models.User.company_id == current_user.company_id).first()
 
     if not assigned_user:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,

@@ -5,14 +5,21 @@ from sqlalchemy.orm import Session
 from app import models, oauth2
 from .database import get_db
 
-def get_lead_or_404(id: int, db: Session):
-    lead = db.query(models.Lead).filter(models.Lead.id == id).first()
+def scoped(query, model, current_user):
+    return query.filter(model.company_id == current_user.company_id)
+
+def get_lead_or_404(id: int, db: Session, current_user):
+    lead = scoped(db.query(models.Lead), models.Lead, current_user).filter(models.Lead.id == id).first()
     if not lead:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
                             detail=f"Lead with id {id} is not found.")
     return lead
 
 def check_lead_permission(lead, current_user):
+    if lead.company_id != current_user.company_id:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
+                            detail=f"Lead with id {lead.id} is not found.")
+    
     if current_user.role == UserRole.admin:
         return True
     
@@ -25,13 +32,12 @@ def check_lead_permission(lead, current_user):
         if lead.owner_id != current_user.id:
             raise HTTPException(status_code=status.HTTP_403_FORBIDDEN,
                             detail="You can only modify your own leads.")
-
-    if current_user.role == UserRole.manager:
-            if lead.owner_id != current_user.id:
-                raise HTTPException(status_code=status.HTTP_403_FORBIDDEN,
-                                detail="You can only modify your own leads or leads assigned to you.")
         
 def check_lead_view_permission(lead, current_user):
+    if lead.company_id != current_user.company_id:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
+                            detail=f"Lead with id {lead.id} is not found.")
+    
     if current_user.role == UserRole.sales:
         if lead.owner_id != current_user.id:
             raise HTTPException(status_code=status.HTTP_403_FORBIDDEN,
