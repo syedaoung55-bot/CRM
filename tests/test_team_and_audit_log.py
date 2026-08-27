@@ -218,11 +218,9 @@ def test_update_team_manager_id_no_existence_check_gap(admin_client, test_team):
     res = admin_client.put(f"/api/v1/teams/{test_team.id}", json={"manager_id": 999999})
     assert res.status_code == 404
 
-
 def test_update_team_manager_id_cross_company_no_check_gap(admin_client, test_team, test_admin_company2):
     res = admin_client.put(f"/api/v1/teams/{test_team.id}", json={"manager_id": test_admin_company2.id})
     assert res.status_code == 404
-
 
 def test_update_team_non_admin_forbidden(manager_client, test_team):
     res = manager_client.put(f"/api/v1/teams/{test_team.id}", json={"name": "hijack"})
