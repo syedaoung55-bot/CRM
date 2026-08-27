@@ -14,7 +14,7 @@ jobs:
         image: postgres
         env:
           POSTGRES_PASSWORD: ${{secrets.DATABASE_PASSWORD}}
-          POSTGRES_DB: ${{secrets.DATABASE_NAME}}_test
+          POSTGRES_DB: ${{secrets.DATABASE_NAME}}
           POSTGRES_USER: ${{secrets.DATABASE_USERNAME}}   
         ports:
           - 5432:5432
@@ -28,7 +28,7 @@ jobs:
       DATABASE_HOSTNAME: localhost
       DATABASE_PORT: ${{secrets.DATABASE_PORT}}
       DATABASE_PASSWORD: ${{secrets.DATABASE_PASSWORD}}
-      DATABASE_NAME: ${{secrets.DATABASE_NAME}}
+      DATABASE_NAME: ${{secrets.DATABASE_NAME}}_test
       DATABASE_USERNAME: ${{secrets.DATABASE_USERNAME}}
       SECRET_KEY: ${{secrets.SECRET_KEY}}
       ALGORITHM: ${{secrets.ALGORITHM}}
@@ -42,10 +42,10 @@ jobs:
 
     steps:
       - name: pulling git repo
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
 
       - name: install python version 3.11
-        uses: actions/setup-python@v2
+        uses: actions/setup-python@v4
         with:
           python-version: "3.11"
 
