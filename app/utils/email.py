@@ -79,3 +79,64 @@ async def send_invite_email(email: str, full_name: str, temp_password: str, comp
     )
     fm = FastMail(conf)
     await fm.send_message(message)
+
+async def send_password_reset_email(email: str, full_name: str, reset_token: str):
+    message = MessageSchema(
+        subject="Password Reset Request",
+        recipients=[email], # type: ignore
+        body=f"""
+        Hi {full_name},
+
+        A password reset was requested for your account.
+
+        Use this token to reset your password: {reset_token}
+
+        If you did not request this, you can safely ignore this email.
+
+        Regards,
+        Your CRM
+        """,
+        subtype=MessageType.plain
+    )
+    fm = FastMail(conf)
+    await fm.send_message(message)
+
+async def weekly_summary_email(email: str, full_name: str, company_name: str, open_leads: int):
+    message = MessageSchema(
+        subject=f"Weekly summary for {company_name}",
+        recipients=[email], # type: ignore
+        body=f"""
+        Hi {full_name},
+
+        Here's your weekly summary for {company_name}.
+
+        open_leads: {open_leads}
+
+        Login to your CRM to get the complete breakdown.
+
+        Regards,
+        Your CRM
+        """,
+        subtype=MessageType.plain
+    )
+    fm = FastMail(conf)
+    await fm.send_message(message)
+
+async def send_verification_email(email: str, full_name: str, verify_token: str):
+    message = MessageSchema(
+        subject=f"Verify your email",
+        recipients=[email], # type: ignore
+        body=f"""
+        Hi {full_name},
+
+        Verify your email  by using this token: {verify_token}.
+
+        this link will expire in 24 hours.
+
+        Regards,
+        Your CRM
+        """,
+        subtype=MessageType.plain
+    )
+    fm = FastMail(conf)
+    await fm.send_message(message)

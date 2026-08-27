@@ -19,4 +19,5 @@ class Settings(BaseSettings):
     mail_port:     int
     mail_server:   str
 
+
 settings = Settings() # type: ignore

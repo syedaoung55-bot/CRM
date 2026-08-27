@@ -25,6 +25,7 @@ async def save_file(file: UploadFile, lead_id: int):
     if len(content) > MAX_FILE_SIZE:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST,
                             detail = f"file exceeds 5MB limit.")
+    
     lead_folder = os.path.join(UPLOAD_DIR, f"lead_{lead_id}")
     os.makedirs(lead_folder, exist_ok=True)
     

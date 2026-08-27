@@ -4,6 +4,7 @@ from . import schemas, database, models
 from fastapi import Depends, status, HTTPException
 from .config import settings
 import secrets
+from uuid import uuid4
 from sqlalchemy.orm import Session
 from fastapi.security.oauth2 import OAuth2PasswordBearer
 
@@ -18,7 +19,7 @@ def create_access_token(data: dict):
     to_encode = data.copy()
 
     expire = datetime.now(timezone.utc) + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
-    to_encode.update({"exp": expire})
+    to_encode.update({"exp": expire, "jti": str(uuid4())})
     encode_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
     return encode_jwt
 
@@ -35,6 +36,7 @@ def save_refresh_token(user_id: int, token: str, db: Session):
         expires_at = expires_at,
         is_revoked = False
     )
+
     db.add(db_token)
     db.commit()
 
